@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">AOE</string>
+
+<!--    LoginScreen     -->
+    <string name="logo_content_description">AOE Logo</string>
+    <string name="login">Login</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
 </resources>
