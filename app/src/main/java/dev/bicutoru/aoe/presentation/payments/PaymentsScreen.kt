@@ -30,9 +30,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import dev.bicutoru.aoe.R
-import dev.bicutoru.aoe.data.datasource.Payment
-import dev.bicutoru.aoe.data.datasource.Payments
-import dev.bicutoru.aoe.data.datasource.UserInfos
+import dev.bicutoru.aoe.domain.model.Payment
+import dev.bicutoru.aoe.domain.model.Payments
+import dev.bicutoru.aoe.domain.model.UserInfos
 import dev.bicutoru.aoe.presentation.common.ui.ComponentDimens
 import dev.bicutoru.aoe.presentation.common.ui.DeviceConfiguration
 import dev.bicutoru.aoe.presentation.common.ui.FontSize

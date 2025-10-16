@@ -13,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import dev.bicutoru.aoe.R
-import dev.bicutoru.aoe.data.datasource.Payment
+import dev.bicutoru.aoe.domain.model.Payment
 import dev.bicutoru.aoe.presentation.common.ui.ComponentDimens
 import dev.bicutoru.aoe.presentation.common.ui.FontSize
 import dev.bicutoru.aoe.ui.theme.medium

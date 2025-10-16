@@ -1,4 +1,4 @@
-package dev.bicutoru.aoe.data.datasource
+package dev.bicutoru.aoe.domain.model
 
 data class UserInfos(
     val customerName: String,
