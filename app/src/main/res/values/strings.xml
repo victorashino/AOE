@@ -1,3 +1,22 @@
 <resources>
     <string name="app_name">AOE</string>
+
+<!--    LoginScreen     -->
+    <string name="logo_content_description">AOE Logo</string>
+    <string name="login">Login</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+
+<!--    PaymentsScreen  -->
+    <string name="back">Voltar</string>
+    <string name="payments">Pagamentos</string>
+    <string name="client_label">Cliente: %1$s</string>
+    <string name="agency_and_account_label">Agência: %1$s | Conta: %2$s</string>
+    <string name="balance_label">Saldo: R$ %1$s</string>
+    <string name="payment_details">Detalhes do pagamento</string>
+    <string name="pt">pt</string>
+    <string name="br">BR</string>
+    <string name="electricity_bill">Conta de luz</string>
+    <string name="bills_paid">Contas pagas</string>
+
 </resources>
