@@ -15,7 +15,8 @@ private val DarkColorScheme = darkColorScheme(
     secondary = TextColorDefaultDark,
     tertiary = InputBackgroundDark,
     background = BackgroundDark,
-    onSurface = ButtonColorDark
+    onSurface = ButtonColor,
+    onPrimaryFixedVariant = PrimaryColorDark
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -23,7 +24,8 @@ private val LightColorScheme = lightColorScheme(
     secondary = TextColorDefault,
     tertiary = InputBackground,
     background = Background,
-    onSurface = ButtonColor
+    onSurface = ButtonColor,
+    onPrimaryFixedVariant = TextGray
 )
 
 @Composable

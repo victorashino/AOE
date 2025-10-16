@@ -9,7 +9,7 @@ object ScreenDimens {
 
 object ComponentDimens {
     val ZeroPadding = 0.dp
-    val SmallPadding = 16.dp
+    val SmallPadding = 4.dp
     val MediumPadding = 24.dp
     val LargePadding = 36.dp
 

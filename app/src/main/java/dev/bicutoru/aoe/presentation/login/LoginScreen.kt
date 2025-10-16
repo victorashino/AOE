@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import dev.bicutoru.aoe.R
+import dev.bicutoru.aoe.core.nav.Routes
 import dev.bicutoru.aoe.presentation.common.ui.ComponentDimens
 import dev.bicutoru.aoe.presentation.common.ui.DeviceConfiguration
 import dev.bicutoru.aoe.presentation.common.ui.FontSize
@@ -61,7 +62,6 @@ import dev.bicutoru.aoe.presentation.login.components.CustomTextField
 import dev.bicutoru.aoe.ui.theme.bold
 
 @SuppressLint("ConfigurationScreenWidthHeight", "UseOfNonLambdaOffsetOverload")
-//@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun LoginScreen(
     navController: NavHostController,
@@ -82,7 +82,8 @@ fun LoginScreen(
 
     Scaffold(
         modifier = Modifier
-            .fillMaxSize(),
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
         contentWindowInsets = WindowInsets.statusBars
     ) { innerPadding ->
 
@@ -111,8 +112,8 @@ fun LoginScreen(
                         onEmailTextChange = { emailState = it.trim() },
                         passwordText = passwordState,
                         onPasswordTextChange = { passwordState = it.trim() },
+                        navController = navController,
                         modifier = Modifier.fillMaxWidth()
-
                     )
                 }
             }
@@ -136,6 +137,7 @@ fun LoginScreen(
                             onEmailTextChange = { emailState = it.trim() },
                             passwordText = passwordState,
                             onPasswordTextChange = { passwordState = it.trim() },
+                            navController = navController,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -160,8 +162,8 @@ fun LoginScreen(
                         onEmailTextChange = { emailState = it.trim() },
                         passwordText = passwordState,
                         onPasswordTextChange = { passwordState = it.trim() },
+                        navController = navController,
                         modifier = Modifier.widthIn(max = ComponentDimens.MaxComponentWidth)
-
                     )
                 }
             }
@@ -204,6 +206,7 @@ fun LoginFormSection(
     onEmailTextChange: (String) -> Unit,
     passwordText: String,
     onPasswordTextChange: (String) -> Unit,
+    navController: NavHostController,
     modifier: Modifier,
 ) {
     Column(modifier = modifier) {
@@ -226,7 +229,7 @@ fun LoginFormSection(
         Spacer(modifier = Modifier.height(ComponentDimens.MediumPadding))
 
         CustomButton(
-            onClick = {},
+            onClick = {navController.navigate(Routes.PAYMENTS_SCREEN)},
             text = stringResource(R.string.login),
             state = true,
             modifier = modifier.fillMaxWidth()

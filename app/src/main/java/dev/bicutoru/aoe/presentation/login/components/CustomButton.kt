@@ -44,7 +44,8 @@ fun CustomButton(
         Text(
             text = text,
             style = MaterialTheme.typography.bold.copy(
-                fontSize = FontSize.FontMedium
+                fontSize = FontSize.FontMedium,
+                color = MaterialTheme.colorScheme.secondary
             )
         )
     }
