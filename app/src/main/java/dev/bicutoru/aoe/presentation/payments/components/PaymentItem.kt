@@ -43,7 +43,7 @@ fun PaymentItem(
                     fontSize = FontSize.FontSmall,
                     color = MaterialTheme.colorScheme.onPrimaryFixedVariant
                 ),
-                modifier = Modifier.padding(top = ComponentDimens.SmallPadding)
+                modifier = Modifier.padding(top = ComponentDimens.TinyPadding)
             )
         }
 

@@ -9,13 +9,16 @@ object ScreenDimens {
 
 object ComponentDimens {
     val ZeroPadding = 0.dp
-    val SmallPadding = 4.dp
+    val TinyPadding = 4.dp
+    val SmallPadding = 16.dp
     val MediumPadding = 24.dp
     val LargePadding = 36.dp
 
     val LargeSpacedBy = 32.dp
 
     val MaxComponentWidth = 540.dp
+
+    val MaxSnackBarWidth = 200.dp
 
     val ButtonHeight = 48.dp
 }

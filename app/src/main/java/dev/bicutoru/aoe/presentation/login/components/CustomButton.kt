@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import dev.bicutoru.aoe.presentation.common.ui.ComponentDimens
 import dev.bicutoru.aoe.presentation.common.ui.FontSize
 import dev.bicutoru.aoe.presentation.common.ui.Radius
+import dev.bicutoru.aoe.ui.theme.DisableButtonColor
+import dev.bicutoru.aoe.ui.theme.DisableButtonTextColor
 import dev.bicutoru.aoe.ui.theme.bold
 
 @Composable
@@ -37,15 +39,14 @@ fun CustomButton(
         interactionSource = interactionSource,
         shape = RoundedCornerShape(Radius.Small),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (state) colors.onSurface else colors.primary,
-            contentColor = if (state) colors.background else colors.primary,
+            containerColor = if (state) colors.onSurface else DisableButtonColor,
+            contentColor = if (state) colors.background else DisableButtonTextColor,
         )
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.bold.copy(
-                fontSize = FontSize.FontMedium,
-                color = MaterialTheme.colorScheme.secondary
+                fontSize = FontSize.FontMedium
             )
         )
     }

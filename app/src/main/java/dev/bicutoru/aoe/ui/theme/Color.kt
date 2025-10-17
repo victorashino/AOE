@@ -8,6 +8,8 @@ val BackgroundDark = Color(0xFF141414)
 
 // Button
 val ButtonColor = Color(0xFF358073)
+val DisableButtonColor = Color(0xFFD5D5D5)
+val DisableButtonTextColor = Color(0xFF8E8E8E)
 
 // Inputs
 val PrimaryColor = Color(0xFF5C738A)
