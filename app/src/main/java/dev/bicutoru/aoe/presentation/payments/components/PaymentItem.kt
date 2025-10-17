@@ -38,7 +38,7 @@ fun PaymentItem(
             )
 
             Text(
-                text = payment.electricityBill,
+                text = payment.amount,
                 style = MaterialTheme.typography.normal.copy(
                     fontSize = FontSize.FontSmall,
                     color = MaterialTheme.colorScheme.onPrimaryFixedVariant
@@ -48,7 +48,7 @@ fun PaymentItem(
         }
 
         Text(
-            text = payment.paymentDate,
+            text = payment.date,
             style = MaterialTheme.typography.normal.copy(
                 fontSize = FontSize.FontSmall,
                 color = MaterialTheme.colorScheme.onPrimaryFixedVariant
