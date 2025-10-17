@@ -5,7 +5,7 @@ Siga as etapas abaixo para configurar e executar o projeto localmente:
 1. **Clonar o repositório**
    ```bash
    git clone https://github.com/victorashino/AOE.git
-   cd aoe-app
+   cd AOE
 
 2. **Abrir o projeto no Android Studio**
 
