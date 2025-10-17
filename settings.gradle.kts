@@ -21,4 +21,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "AOE"
 include(":app")
- 
