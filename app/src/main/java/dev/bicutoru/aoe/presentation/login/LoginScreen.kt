@@ -7,6 +7,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,18 +29,24 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -51,6 +58,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import dev.bicutoru.aoe.R
 import dev.bicutoru.aoe.core.nav.Routes
+import dev.bicutoru.aoe.presentation.auth.AuthState
+import dev.bicutoru.aoe.presentation.auth.AuthViewModel
 import dev.bicutoru.aoe.presentation.common.ui.ComponentDimens
 import dev.bicutoru.aoe.presentation.common.ui.DeviceConfiguration
 import dev.bicutoru.aoe.presentation.common.ui.FontSize
@@ -65,10 +74,54 @@ import dev.bicutoru.aoe.ui.theme.bold
 @Composable
 fun LoginScreen(
     navController: NavHostController,
-    viewModel: LoginViewModel = hiltViewModel()
+    loginViewModel: LoginViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
-    var emailState by remember { mutableStateOf("") }
-    var passwordState by remember { mutableStateOf("") }
+
+    val uiState by loginViewModel.uiState.collectAsState()
+    val authState by authViewModel.authState.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(authState) {
+        when (authState) {
+            is AuthState.Idle -> {
+                navController.navigate(Routes.PAYMENTS_SCREEN) {
+                    launchSingleTop = true
+                }
+            }
+
+            is AuthState.Error -> {
+                loginViewModel.setLoading(false)
+                loginViewModel.buttonControl()
+                val errorMessage = (authState as AuthState.Error).message
+                snackbarHostState.showSnackbar(
+                    message = errorMessage,
+                    duration = SnackbarDuration.Short
+                )
+                authViewModel.resetState()
+                loginViewModel.buttonControl()
+            }
+
+            else -> Unit
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            loginViewModel.setLoading(false)
+            loginViewModel.resetState()
+        }
+    }
+
+    fun handleLogin() {
+        val isValid = loginViewModel.onLoginClick()
+
+        if (isValid && uiState.isButtonEnabled) {
+            loginViewModel.setLoading(true)
+            authViewModel.login()
+        }
+    }
 
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
@@ -77,94 +130,125 @@ fun LoginScreen(
     val isKeyboardVisible = imeBottom > 0
     val offset by animateDpAsState(
         targetValue = if (isKeyboardVisible) screenHeight * 0.09f else ComponentDimens.ZeroPadding,
-        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
+        animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing)
     )
 
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
-        contentWindowInsets = WindowInsets.statusBars
+        contentWindowInsets = WindowInsets.statusBars,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .padding(ComponentDimens.SmallPadding)
+                    .imePadding()
+                    .widthIn(ComponentDimens.MaxSnackBarWidth)
+            )
+        }
     ) { innerPadding ->
 
-        val rootModifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding)
-            .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = ScreenDimens.HorizontalPadding)
-            .consumeWindowInsets(WindowInsets.navigationBars)
-
-        val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-        val deviceConfiguration = DeviceConfiguration.fromWindowSizeClass(windowSizeClass)
-
-        when (deviceConfiguration) {
-            DeviceConfiguration.MOBILE_PORTRAIT -> {
-                Column(
-                    modifier = rootModifier
-                        .offset(y = -offset)
-                        .verticalScroll(rememberScrollState())
-                        .imePadding(),
-                    verticalArrangement = Arrangement.spacedBy(ComponentDimens.LargeSpacedBy)
-                ) {
-                    LoginHeaderSection(modifier = Modifier.fillMaxWidth(), isKeyboardVisible)
-                    LoginFormSection(
-                        emailText = emailState,
-                        onEmailTextChange = { emailState = it.trim() },
-                        passwordText = passwordState,
-                        onPasswordTextChange = { passwordState = it.trim() },
-                        navController = navController,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+                contentAlignment = Alignment.Center
+            ) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth(0.55f))
             }
+        } else {
 
-            DeviceConfiguration.MOBILE_LANDSCAPE -> {
-                Row(
-                    modifier = rootModifier
-                        .windowInsetsPadding(WindowInsets.displayCutout),
-                    horizontalArrangement = Arrangement.spacedBy(ComponentDimens.LargeSpacedBy)
-                ) {
-                    LoginHeaderSection(modifier = Modifier.weight(1f), false)
+            val rootModifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = ScreenDimens.HorizontalPadding)
+                .consumeWindowInsets(WindowInsets.navigationBars)
+
+            val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+            val deviceConfiguration =
+                DeviceConfiguration.fromWindowSizeClass(windowSizeClass)
+
+            when (deviceConfiguration) {
+                DeviceConfiguration.MOBILE_PORTRAIT -> {
                     Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.Center
+                        modifier = rootModifier
+                            .offset(y = -offset)
+                            .verticalScroll(rememberScrollState())
+                            .imePadding(),
+                        verticalArrangement = Arrangement.spacedBy(ComponentDimens.LargeSpacedBy)
                     ) {
+                        LoginHeaderSection(
+                            modifier = Modifier.fillMaxWidth(),
+                            isKeyboardVisible
+                        )
                         LoginFormSection(
-                            emailText = emailState,
-                            onEmailTextChange = { emailState = it.trim() },
-                            passwordText = passwordState,
-                            onPasswordTextChange = { passwordState = it.trim() },
-                            navController = navController,
+                            emailText = uiState.email,
+                            onEmailTextChange = loginViewModel::onEmailChange,
+                            passwordText = uiState.password,
+                            onPasswordTextChange = loginViewModel::onPasswordChange,
+                            onClickButton = { handleLogin() },
+                            uiState = uiState,
+                            onPasswordFieldFocused = { loginViewModel.validateEmailOnFocusChange() },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
-            }
 
-            DeviceConfiguration.TABLET_PORTRAIT,
-            DeviceConfiguration.TABLET_LANDSCAPE -> {
-                Column(
-                    modifier = rootModifier
-                        .offset(y = -offset)
-                        .verticalScroll(rememberScrollState())
-                        .imePadding(),
-                    verticalArrangement = Arrangement.spacedBy(ComponentDimens.LargeSpacedBy)
-                ) {
-                    LoginHeaderSection(
-                        modifier = Modifier.widthIn(max = ComponentDimens.MaxComponentWidth),
-                        isKeyboardVisible = isKeyboardVisible
-                    )
-                    LoginFormSection(
-                        emailText = emailState,
-                        onEmailTextChange = { emailState = it.trim() },
-                        passwordText = passwordState,
-                        onPasswordTextChange = { passwordState = it.trim() },
-                        navController = navController,
-                        modifier = Modifier.widthIn(max = ComponentDimens.MaxComponentWidth)
-                    )
+                DeviceConfiguration.MOBILE_LANDSCAPE -> {
+                    Row(
+                        modifier = rootModifier
+                            .windowInsetsPadding(WindowInsets.displayCutout),
+                        horizontalArrangement = Arrangement.spacedBy(ComponentDimens.LargeSpacedBy)
+                    ) {
+                        LoginHeaderSection(modifier = Modifier.weight(1f), false)
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            LoginFormSection(
+                                emailText = uiState.email,
+                                onEmailTextChange = loginViewModel::onEmailChange,
+                                passwordText = uiState.password,
+                                onPasswordTextChange = loginViewModel::onPasswordChange,
+                                onClickButton = { handleLogin() },
+                                uiState = uiState,
+                                onPasswordFieldFocused = { loginViewModel.validateEmailOnFocusChange() },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+
+                DeviceConfiguration.TABLET_PORTRAIT,
+                DeviceConfiguration.TABLET_LANDSCAPE -> {
+                    Column(
+                        modifier = rootModifier
+                            .offset(y = -offset)
+                            .verticalScroll(rememberScrollState())
+                            .imePadding(),
+                        verticalArrangement = Arrangement.spacedBy(ComponentDimens.LargeSpacedBy)
+                    ) {
+                        LoginHeaderSection(
+                            modifier = Modifier.widthIn(max = ComponentDimens.MaxComponentWidth),
+                            isKeyboardVisible = isKeyboardVisible
+                        )
+                        LoginFormSection(
+                            emailText = uiState.email,
+                            onEmailTextChange = loginViewModel::onEmailChange,
+                            passwordText = uiState.password,
+                            onPasswordTextChange = loginViewModel::onPasswordChange,
+                            onClickButton = { handleLogin() },
+                            uiState = uiState,
+                            onPasswordFieldFocused = { loginViewModel.validateEmailOnFocusChange() },
+                            modifier = Modifier.widthIn(max = ComponentDimens.MaxComponentWidth)
+                        )
+                    }
                 }
             }
         }
@@ -201,19 +285,34 @@ fun LoginHeaderSection(
 }
 
 @Composable
+
 fun LoginFormSection(
+    uiState: LoginUiState,
     emailText: String,
     onEmailTextChange: (String) -> Unit,
     passwordText: String,
     onPasswordTextChange: (String) -> Unit,
-    navController: NavHostController,
+    onClickButton: () -> Unit,
+    onPasswordFieldFocused: () -> Unit,
     modifier: Modifier,
 ) {
+
+    val emailErrorText = when (uiState.emailErrorType) {
+        EmailErrorType.INVALID -> stringResource(R.string.invalid_email)
+        else -> null
+    }
+
+    val passwordErrorText = when (uiState.passwordErrorType) {
+        PasswordErrorType.INVALID -> stringResource(R.string.invalid_password)
+        else -> null
+    }
+
     Column(modifier = modifier) {
         CustomTextField(
             label = stringResource(R.string.email),
             value = emailText,
             onValueChange = onEmailTextChange,
+            error = emailErrorText,
             modifier = modifier.fillMaxWidth()
         )
 
@@ -223,15 +322,20 @@ fun LoginFormSection(
             label = stringResource(R.string.password),
             value = passwordText,
             onValueChange = onPasswordTextChange,
-            modifier = modifier.fillMaxWidth()
+            error = passwordErrorText,
+            modifier = modifier
+                .fillMaxWidth()
+                .onFocusChanged { focusState ->
+                    if (focusState.isFocused) onPasswordFieldFocused()
+                }
         )
 
         Spacer(modifier = Modifier.height(ComponentDimens.MediumPadding))
 
         CustomButton(
-            onClick = {navController.navigate(Routes.PAYMENTS_SCREEN)},
+            onClick = onClickButton,
             text = stringResource(R.string.login),
-            state = true,
+            state = uiState.isButtonEnabled,
             modifier = modifier.fillMaxWidth()
         )
     }

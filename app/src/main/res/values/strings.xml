@@ -18,5 +18,7 @@
     <string name="br">BR</string>
     <string name="electricity_bill">Conta de luz</string>
     <string name="bills_paid">Contas pagas</string>
+    <string name="invalid_email">Email inválido</string>
+    <string name="invalid_password">Senha inválida</string>
 
 </resources>

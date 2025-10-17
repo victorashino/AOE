@@ -1,6 +1,8 @@
 package dev.bicutoru.aoe.presentation.payments
 
+import android.annotation.SuppressLint
 import android.icu.text.NumberFormat
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +25,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -30,9 +34,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import dev.bicutoru.aoe.R
+import dev.bicutoru.aoe.core.nav.Routes
 import dev.bicutoru.aoe.domain.model.Payment
 import dev.bicutoru.aoe.domain.model.Payments
 import dev.bicutoru.aoe.domain.model.UserInfos
+import dev.bicutoru.aoe.presentation.auth.AuthState
+import dev.bicutoru.aoe.presentation.auth.AuthViewModel
 import dev.bicutoru.aoe.presentation.common.ui.ComponentDimens
 import dev.bicutoru.aoe.presentation.common.ui.DeviceConfiguration
 import dev.bicutoru.aoe.presentation.common.ui.FontSize
@@ -43,11 +50,18 @@ import dev.bicutoru.aoe.ui.theme.medium
 import dev.bicutoru.aoe.ui.theme.normal
 import java.util.Locale
 
+@SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
 fun PaymentsScreen(
-    navController: NavHostController,
-    viewModel: PaymentsViewModel = hiltViewModel()
+    navController: NavHostController
 ) {
+    val authViewModel: AuthViewModel = hiltViewModel(navController.getBackStackEntry(Routes.LOGIN_SCREEN))
+    val authState by authViewModel.authState.collectAsState()
+
+    BackHandler {
+        authViewModel.resetState()
+        navController.popBackStack()
+    }
 
     Scaffold(
         modifier = Modifier
@@ -59,74 +73,95 @@ fun PaymentsScreen(
         val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
         val deviceConfiguration = DeviceConfiguration.fromWindowSizeClass(windowSizeClass)
 
-        val payments = Payments(listOf(
-            Payment("01/03/2004", electricityBill = "R$400,00", id = 0),
-            Payment("01/03/2004", electricityBill = "R$400,00", id = 1),
-            Payment("01/03/2004", electricityBill = "R$400,00", id = 2),
-            Payment("01/03/2004", electricityBill = "R$400,00", id = 3),
-            Payment("01/03/2004", electricityBill = "R$400,00", id = 4),
-            Payment("01/03/2004", electricityBill = "R$400,00", id = 5),
-            Payment("01/03/2004", electricityBill = "R$400,00", id = 6),
-            Payment("01/03/2004", electricityBill = "R$400,00", id = 7),
-            Payment("01/03/2004", electricityBill = "R$400,00", id = 8),
-            Payment("01/03/2004", electricityBill = "R$400,00", id = 9),
-            Payment("01/03/2004", electricityBill = "R$400,00", id = 10),
-            Payment("01/03/2004", electricityBill = "R$400,00", id = 11),
-        ))
+        val payments = Payments(
+            listOf(
+                Payment("01/03/2004", electricityBill = "R$400,00", id = 0),
+                Payment("01/03/2004", electricityBill = "R$400,00", id = 1),
+                Payment("01/03/2004", electricityBill = "R$400,00", id = 2),
+                Payment("01/03/2004", electricityBill = "R$400,00", id = 3),
+                Payment("01/03/2004", electricityBill = "R$400,00", id = 4),
+                Payment("01/03/2004", electricityBill = "R$400,00", id = 5),
+                Payment("01/03/2004", electricityBill = "R$400,00", id = 6),
+                Payment("01/03/2004", electricityBill = "R$400,00", id = 7),
+                Payment("01/03/2004", electricityBill = "R$400,00", id = 8),
+                Payment("01/03/2004", electricityBill = "R$400,00", id = 9),
+                Payment("01/03/2004", electricityBill = "R$400,00", id = 10),
+                Payment("01/03/2004", electricityBill = "R$400,00", id = 11),
+            )
+        )
 
         when (deviceConfiguration) {
             DeviceConfiguration.MOBILE_PORTRAIT,
             DeviceConfiguration.MOBILE_LANDSCAPE,
             DeviceConfiguration.TABLET_PORTRAIT,
             DeviceConfiguration.TABLET_LANDSCAPE -> {
-                Column(
-                    modifier = Modifier
-                        .padding(innerPadding)
-                        .background(MaterialTheme.colorScheme.background)
-                ) {
-                    PaymentsHeader(
-                        modifier = Modifier,
-                        onBackClick = { navController.popBackStack() }
-                    )
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background)
-                            .padding(horizontal = ScreenDimens.HorizontalPadding)
-                            .consumeWindowInsets(WindowInsets.navigationBars)
-                            .widthIn(max = ComponentDimens.MaxComponentWidth)
-                            .align(Alignment.CenterHorizontally),
-                        contentPadding = PaddingValues(
-                            bottom = ComponentDimens.LargePadding
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(ComponentDimens.MediumPadding)
-                    ) {
-                        item {
-                            PaymentsUserDetailsSection(
-                                modifier = Modifier.fillMaxWidth(),
-                                userInfos = UserInfos(
-                                    customerName = "Victor Ashino",
-                                    accountNumber = "34123-3",
-                                    branchNumber = "412",
-                                    checkingAccountBalance = 41234,
-                                    id = "01"
-                                )
-                            )
 
-                            Text(
-                                text = stringResource(R.string.bills_paid),
-                                style = MaterialTheme.typography.bold.copy(
-                                    fontSize = FontSize.FontExtraLarge
+                when (authState) {
+                    is AuthState.Empty -> Unit
+
+                    is AuthState.Idle -> {
+                        val userInfos = (authState as AuthState.Idle).user
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
+                                .background(MaterialTheme.colorScheme.background)
+                        ) {
+                            PaymentsHeader(
+                                modifier = Modifier,
+                                onBackClick = {
+                                    authViewModel.resetState()
+                                    navController.popBackStack()
+                                }
+                            )
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.background)
+                                    .padding(horizontal = ScreenDimens.HorizontalPadding)
+                                    .consumeWindowInsets(WindowInsets.navigationBars)
+                                    .widthIn(max = ComponentDimens.MaxComponentWidth)
+                                    .align(Alignment.CenterHorizontally),
+                                contentPadding = PaddingValues(
+                                    bottom = ComponentDimens.LargePadding
                                 ),
-                                modifier = Modifier.padding(bottom = ComponentDimens.MediumPadding)
-                            )
-                        }
+                                verticalArrangement = Arrangement.spacedBy(ComponentDimens.MediumPadding)
+                            ) {
+                                item {
+                                    PaymentsUserDetailsSection(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        userInfos = userInfos
+                                    )
 
-                        items(
-                            items = payments.payments,
-                            key = { it.id }
-                        ) { payment ->
-                            PaymentItem(payment = payment, modifier = Modifier.fillMaxWidth())
+                                    Text(
+                                        text = stringResource(R.string.bills_paid),
+                                        style = MaterialTheme.typography.bold.copy(
+                                            fontSize = FontSize.FontExtraLarge
+                                        ),
+                                        modifier = Modifier.padding(bottom = ComponentDimens.MediumPadding)
+                                    )
+                                }
+
+                                items(
+                                    items = payments.payments,
+                                    key = { it.id }
+                                ) { payment ->
+                                    PaymentItem(
+                                        payment = payment,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    is AuthState.Error -> {
+                        val errorMessage = (authState as AuthState.Error).message
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = errorMessage, color = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -172,7 +207,10 @@ fun PaymentsUserDetailsSection(
     modifier: Modifier
 ) {
     Column(
-        modifier = modifier.padding(top = ComponentDimens.MediumPadding, bottom = ComponentDimens.LargePadding)
+        modifier = modifier.padding(
+            top = ComponentDimens.MediumPadding,
+            bottom = ComponentDimens.LargePadding
+        )
     ) {
         Text(
             text = stringResource(R.string.payment_details),
@@ -200,7 +238,7 @@ fun PaymentsUserDetailsSection(
             style = MaterialTheme.typography.medium.copy(
                 fontSize = FontSize.FontMedium
             ),
-            modifier = Modifier.padding(bottom = ComponentDimens.SmallPadding)
+            modifier = Modifier.padding(bottom = ComponentDimens.TinyPadding)
         )
 
         Text(
