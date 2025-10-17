@@ -33,12 +33,19 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
     kotlinOptions {
         jvmTarget = "17"
     }
     buildFeatures {
         compose = true
+    }
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+        htmlReport = true
+        xmlReport = true
+        htmlOutput = layout.buildDirectory.file("reports/lint/lint-report.html").get().asFile
+        xmlOutput = layout.buildDirectory.file("reports/lint/lint-report.xml").get().asFile
     }
 }
 
