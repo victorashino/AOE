@@ -6,6 +6,6 @@ import retrofit2.http.GET
 interface PaymentsService {
 
     @GET("payments")
-    suspend fun getPayments(): PaymentsDTO
+    suspend fun getPayments(): List<PaymentsDTO>
 
 }

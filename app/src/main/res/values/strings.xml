@@ -20,5 +20,8 @@
     <string name="bills_paid">Contas pagas</string>
     <string name="invalid_email">Email inválido</string>
     <string name="invalid_password">Senha inválida</string>
+    <string name="payments_empty_state_message">Não foram encontrados pagamentos.</string>
+    <string name="payments_error_message">Erro ao buscar pagamentos,\ntente novamente mais tarde!</string>
+
 
 </resources>

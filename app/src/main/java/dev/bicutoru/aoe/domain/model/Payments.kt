@@ -5,7 +5,7 @@ data class Payments(
 )
 
 data class Payment(
-    val paymentDate: String,
-    val electricityBill: String,
-    val id: Int
+    val id: String,
+    val date: String,
+    val amount: String
 )
