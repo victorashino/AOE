@@ -9,6 +9,9 @@ on:
     branches:
       - develop
 
+permissions:
+  contents: write
+
 jobs:
   ci:
     if: github.ref == 'refs/heads/develop'
@@ -77,19 +80,12 @@ jobs:
           name: release-apk
           path: app/build/outputs/apk/release/app-release-unsigned.apk
 
-      - name: Create GitHub Release
-        id: create_release
+      - name: Create GitHub Release and Upload APK
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v1.0.${{ github.run_number }}
-          name: Release ${{ github.run_number }}
-          body: "Release automatizada do APK"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload APK to GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
+          name: "Release ${{ github.run_number }}"
+          body: "Release automatizada do APK gerada pelo workflow CI/CD."
           files: app/build/outputs/apk/release/app-release-unsigned.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
