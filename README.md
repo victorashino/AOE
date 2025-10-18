@@ -1,7 +1,12 @@
-## Execução do projeto
+# Execução do projeto
 
 Siga as etapas abaixo para configurar e executar o projeto localmente:
 
+## **Via releases**
+1. Baixe no dispositivo Android o arquivo app-release.apk disponibilizado nos releases deste repositório.
+3. Abra o apk para iniciar a instalação do app no dispositivo.
+
+## **Via git clone**
 1. **Clonar o repositório**
    ```bash
    git clone https://github.com/victorashino/AOE.git
