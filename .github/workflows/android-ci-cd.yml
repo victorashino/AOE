@@ -71,14 +71,30 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Build Release APK
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Generate debug keystore for signing
+        run: |
+          keytool -genkeypair -v -keystore debug.keystore -storepass android -keypass android \
+            -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Build Signed Release APK
         run: ./gradlew assembleRelease
 
       - name: Upload Release APK as artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          path: app/build/outputs/apk/release/app-release.apk
 
       - name: Create GitHub Release and Upload APK
         uses: softprops/action-gh-release@v1
@@ -86,6 +102,6 @@ jobs:
           tag_name: v1.0.${{ github.run_number }}
           name: "Release ${{ github.run_number }}"
           body: "Release automatizada do APK gerada pelo workflow CI/CD."
-          files: app/build/outputs/apk/release/app-release-unsigned.apk
+          files: app/build/outputs/apk/release/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
