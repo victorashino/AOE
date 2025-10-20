@@ -1,5 +1,6 @@
 package dev.bicutoru.aoe.presentation.login
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -7,39 +8,59 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
-@HiltViewModel
-class LoginViewModel @Inject constructor() : ViewModel() {
 
-    private val _uiState = MutableStateFlow(LoginUiState())
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(
+        LoginUiState(
+            email = savedStateHandle["email"] ?: "",
+            password = savedStateHandle["password"] ?: ""
+        )
+    )
     val uiState: StateFlow<LoginUiState> = _uiState
 
+    // Atualiza email e salva no SavedStateHandle
     fun onEmailChange(newEmail: String) {
+        val trimmedEmail = newEmail.trim()
         _uiState.update { current ->
-            val trimmedEmail = newEmail.trim()
+            val emailError = if (current.emailError != null &&
+                android.util.Patterns.EMAIL_ADDRESS.matcher(trimmedEmail).matches()
+            ) null else current.emailError
+
             current.copy(
                 email = trimmedEmail,
                 isButtonEnabled = trimmedEmail.isNotBlank() && current.password.isNotBlank(),
-                emailError = if (current.emailError != null && android.util.Patterns.EMAIL_ADDRESS.matcher(
-                        trimmedEmail
-                    ).matches()
-                ) null else current.emailError
+                emailError = emailError
             )
         }
+        savedStateHandle["email"] = trimmedEmail
     }
 
     fun onPasswordChange(newPassword: String) {
+        val trimmedPassword = newPassword.trim()
+        val valid = trimmedPassword.length >= 6 &&
+                trimmedPassword.any { it.isLetter() } &&
+                trimmedPassword.any { it.isDigit() }
+
         _uiState.update { current ->
-            val trimmedPassword = newPassword.trim()
-            val valid = trimmedPassword.length >= 6 &&
-                    trimmedPassword.any { it.isLetter() } &&
-                    trimmedPassword.any { it.isDigit() }
+            val passwordError = if (current.passwordError != null && valid) null else current.passwordError
 
             current.copy(
                 password = trimmedPassword,
                 isButtonEnabled = current.email.isNotBlank() && trimmedPassword.isNotBlank(),
-                passwordError = if (current.passwordError != null && valid) null else current.passwordError
+                passwordError = passwordError
             )
         }
+        savedStateHandle["password"] = trimmedPassword
+    }
+
+    fun resetState() {
+        _uiState.value = LoginUiState()
+        savedStateHandle["email"] = ""
+        savedStateHandle["password"] = ""
     }
 
     fun validateEmailOnFocusChange() {
@@ -65,9 +86,6 @@ class LoginViewModel @Inject constructor() : ViewModel() {
         return true
     }
 
-    fun resetState() {
-        _uiState.value = LoginUiState()
-    }
 
     fun setLoading(value: Boolean) {
         _uiState.update { it.copy(isLoading = value) }

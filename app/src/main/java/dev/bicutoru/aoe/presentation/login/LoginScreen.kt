@@ -55,7 +55,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import dev.bicutoru.aoe.R
 import dev.bicutoru.aoe.core.nav.Routes
 import dev.bicutoru.aoe.presentation.auth.AuthState
@@ -70,39 +73,36 @@ import dev.bicutoru.aoe.presentation.login.components.CustomPasswordField
 import dev.bicutoru.aoe.presentation.login.components.CustomTextField
 import dev.bicutoru.aoe.ui.theme.bold
 
-@SuppressLint("ConfigurationScreenWidthHeight", "UseOfNonLambdaOffsetOverload")
+@SuppressLint("ConfigurationScreenWidthHeight", "UseOfNonLambdaOffsetOverload",
+    "UnrememberedGetBackStackEntry"
+)
 @Composable
 fun LoginScreen(
     navController: NavHostController,
     loginViewModel: LoginViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
-
     val uiState by loginViewModel.uiState.collectAsState()
     val authState by authViewModel.authState.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val scrollState = rememberScrollState()
 
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.Idle -> {
-                navController.navigate(Routes.PAYMENTS_SCREEN) {
-                    launchSingleTop = true
-                }
+                navController.navigate(Routes.PAYMENTS_SCREEN) { launchSingleTop = true }
             }
-
             is AuthState.Error -> {
                 loginViewModel.setLoading(false)
                 loginViewModel.buttonControl()
-                val errorMessage = (authState as AuthState.Error).message
                 snackbarHostState.showSnackbar(
-                    message = errorMessage,
+                    message = (authState as AuthState.Error).message,
                     duration = SnackbarDuration.Short
                 )
                 authViewModel.resetState()
                 loginViewModel.buttonControl()
             }
-
             else -> Unit
         }
     }
@@ -110,13 +110,11 @@ fun LoginScreen(
     DisposableEffect(Unit) {
         onDispose {
             loginViewModel.setLoading(false)
-            loginViewModel.resetState()
         }
     }
 
     fun handleLogin() {
         val isValid = loginViewModel.onLoginClick()
-
         if (isValid && uiState.isButtonEnabled) {
             loginViewModel.setLoading(true)
             authViewModel.login()
@@ -158,102 +156,84 @@ fun LoginScreen(
             ) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth(0.55f))
             }
-        } else {
+            return@Scaffold
+        }
 
-            val rootModifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = ScreenDimens.HorizontalPadding)
-                .consumeWindowInsets(WindowInsets.navigationBars)
+        val rootModifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = ScreenDimens.HorizontalPadding)
+            .consumeWindowInsets(WindowInsets.navigationBars)
 
-            val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-            val deviceConfiguration =
-                DeviceConfiguration.fromWindowSizeClass(windowSizeClass)
+        val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+        val deviceConfiguration = DeviceConfiguration.fromWindowSizeClass(windowSizeClass)
 
-            when (deviceConfiguration) {
-                DeviceConfiguration.MOBILE_PORTRAIT -> {
+        val headerModifier = when (deviceConfiguration) {
+            DeviceConfiguration.TABLET_PORTRAIT, DeviceConfiguration.TABLET_LANDSCAPE ->
+                Modifier.widthIn(max = ComponentDimens.MaxComponentWidth)
+            else -> Modifier.fillMaxWidth()
+        }
+
+        val formModifier = when (deviceConfiguration) {
+            DeviceConfiguration.TABLET_PORTRAIT, DeviceConfiguration.TABLET_LANDSCAPE ->
+                Modifier.widthIn(max = ComponentDimens.MaxComponentWidth)
+            else -> Modifier.fillMaxWidth()
+        }
+
+        when (deviceConfiguration) {
+            DeviceConfiguration.MOBILE_LANDSCAPE -> {
+                Row(
+                    modifier = rootModifier.windowInsetsPadding(WindowInsets.displayCutout),
+                    horizontalArrangement = Arrangement.spacedBy(ComponentDimens.LargeSpacedBy)
+                ) {
+                    LoginHeaderSection(modifier = Modifier.weight(1f), isKeyboardVisible = false)
                     Column(
-                        modifier = rootModifier
-                            .offset(y = -offset)
-                            .verticalScroll(rememberScrollState())
-                            .imePadding(),
-                        verticalArrangement = Arrangement.spacedBy(ComponentDimens.LargeSpacedBy)
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .verticalScroll(scrollState),
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        LoginHeaderSection(
-                            modifier = Modifier.fillMaxWidth(),
-                            isKeyboardVisible
-                        )
                         LoginFormSection(
+                            uiState = uiState,
                             emailText = uiState.email,
                             onEmailTextChange = loginViewModel::onEmailChange,
                             passwordText = uiState.password,
                             onPasswordTextChange = loginViewModel::onPasswordChange,
                             onClickButton = { handleLogin() },
-                            uiState = uiState,
                             onPasswordFieldFocused = { loginViewModel.validateEmailOnFocusChange() },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = formModifier
                         )
                     }
                 }
+            }
 
-                DeviceConfiguration.MOBILE_LANDSCAPE -> {
-                    Row(
-                        modifier = rootModifier
-                            .windowInsetsPadding(WindowInsets.displayCutout),
-                        horizontalArrangement = Arrangement.spacedBy(ComponentDimens.LargeSpacedBy)
-                    ) {
-                        LoginHeaderSection(modifier = Modifier.weight(1f), false)
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
-                                .verticalScroll(rememberScrollState()),
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            LoginFormSection(
-                                emailText = uiState.email,
-                                onEmailTextChange = loginViewModel::onEmailChange,
-                                passwordText = uiState.password,
-                                onPasswordTextChange = loginViewModel::onPasswordChange,
-                                onClickButton = { handleLogin() },
-                                uiState = uiState,
-                                onPasswordFieldFocused = { loginViewModel.validateEmailOnFocusChange() },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-                    }
-                }
-
-                DeviceConfiguration.TABLET_PORTRAIT,
-                DeviceConfiguration.TABLET_LANDSCAPE -> {
-                    Column(
-                        modifier = rootModifier
-                            .offset(y = -offset)
-                            .verticalScroll(rememberScrollState())
-                            .imePadding(),
-                        verticalArrangement = Arrangement.spacedBy(ComponentDimens.LargeSpacedBy)
-                    ) {
-                        LoginHeaderSection(
-                            modifier = Modifier.widthIn(max = ComponentDimens.MaxComponentWidth),
-                            isKeyboardVisible = isKeyboardVisible
-                        )
-                        LoginFormSection(
-                            emailText = uiState.email,
-                            onEmailTextChange = loginViewModel::onEmailChange,
-                            passwordText = uiState.password,
-                            onPasswordTextChange = loginViewModel::onPasswordChange,
-                            onClickButton = { handleLogin() },
-                            uiState = uiState,
-                            onPasswordFieldFocused = { loginViewModel.validateEmailOnFocusChange() },
-                            modifier = Modifier.widthIn(max = ComponentDimens.MaxComponentWidth)
-                        )
-                    }
+            else -> { // Mobile Portrait & Tablets
+                Column(
+                    modifier = rootModifier
+                        .offset(y = -offset)
+                        .verticalScroll(scrollState)
+                        .imePadding(),
+                    verticalArrangement = Arrangement.spacedBy(ComponentDimens.LargeSpacedBy)
+                ) {
+                    LoginHeaderSection(modifier = headerModifier, isKeyboardVisible = isKeyboardVisible)
+                    LoginFormSection(
+                        uiState = uiState,
+                        emailText = uiState.email,
+                        onEmailTextChange = loginViewModel::onEmailChange,
+                        passwordText = uiState.password,
+                        onPasswordTextChange = loginViewModel::onPasswordChange,
+                        onClickButton = { handleLogin() },
+                        onPasswordFieldFocused = { loginViewModel.validateEmailOnFocusChange() },
+                        modifier = formModifier
+                    )
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun LoginHeaderSection(
